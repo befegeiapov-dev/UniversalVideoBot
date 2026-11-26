@@ -78,6 +78,31 @@ async def handle_link(message: Message):
 
     url = match.group(0).rstrip(".,!?)")
 
+    if "tiktok.com" in url and "/photo/" in url:
+        status = await message.answer("⏳ Скачиваю фото...")
+        try:
+            imgs = scrape_tiktok_photos(url)
+            if not imgs:
+                await status.edit_text("❌ Фото не найдены.")
+                return
+            import aiohttp
+            paths = []
+            for i, img_url in enumerate(imgs):
+                p = DOWNLOAD_DIR / f"photo{i}.jpg"
+                async with aiohttp.ClientSession() as s:
+                    async with s.get(img_url) as resp:
+                        p.write_bytes(await resp.read())
+                paths.append(p)
+            await status.edit_text("📤 Отправляю фото...")
+            for p in paths:
+                await message.answer_photo(photo=FSInputFile(p))
+                p.unlink(missing_ok=True)
+            await status.delete()
+        except Exception as error:
+            logging.exception("Photo error")
+            await status.edit_text(f"❌ Ошибка: {str(error)[:500]}")
+        return
+
     if not valid_url(url):
         await message.answer("Этот сайт пока не поддерживается.")
         return
@@ -116,7 +141,30 @@ async def handle_link(message: Message):
             filepath.unlink(missing_ok=True)
 
 
-async def health(request):
+import json, re
+from curl_cffi import requests as cffi_requests
+
+def scrape_tiktok_photos(url):
+    r = cffi_requests.get(url, impersonate="chrome", timeout=30)
+    m = re.search(r'<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">(.*?)</script>', r.text, re.S)
+    if not m:
+        return []
+    data = json.loads(m.group(1))
+    imgs = []
+    def walk(o):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k == "imagePost" and isinstance(v, dict):
+                    for im in v.get("images", []):
+                        urls = im.get("imageURL", {}).get("urlList", [])
+                        if urls:
+                            imgs.append(urls[0])
+                walk(v)
+        elif isinstance(o, list):
+            for x in o:
+                walk(x)
+    walk(data)
+    return imgs
     return web.Response(text="Video Downloader Bot is running!")
 
 

@@ -1,6 +1,4 @@
-aiogram==3.21.0
-yt-dlp[default]
-telethon
-python-dotenv
+aiogram
 aiohttp
-
+yt-dlp
+curl_cffi
