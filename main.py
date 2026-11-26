@@ -144,7 +144,8 @@ async def handle_link(message: Message):
 import json, re
 from curl_cffi import requests as cffi_requests
 
-def scrape_tiktok_photos(url):
+async def health(request):
+    return web.Response(text="Video Downloader Bot is running!")
     r = cffi_requests.get(url, impersonate="chrome", timeout=30)
     m = re.search(r'<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">(.*?)</script>', r.text, re.S)
     if not m:
