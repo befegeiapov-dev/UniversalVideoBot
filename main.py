@@ -120,7 +120,18 @@ async def health(request):
     return web.Response(text="Video Downloader Bot is running!")
 
 
-async def main():
+async def keep_alive():
+    import aiohttp, os, asyncio
+    url = os.getenv("RENDER_EXTERNAL_URL", f"http://localhost:{os.getenv('PORT','10000')}")
+    while True:
+    asyncio.create_task(keep_alive())
+
+    try:
+            async with aiohttp.ClientSession() as s:
+                await s.get(url + "/")
+        except Exception:
+            pass
+        await asyncio.sleep(300)
     if not BOT_TOKEN or OWNER_ID == 0:
         raise RuntimeError("Не настроены BOT_TOKEN или OWNER_ID.")
 
