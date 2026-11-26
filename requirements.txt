@@ -1,0 +1,5 @@
+aiogram==3.21.0
+yt-dlp
+telethon
+python-dotenv
+aiohttp
