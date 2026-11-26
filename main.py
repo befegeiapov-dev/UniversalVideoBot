@@ -124,14 +124,17 @@ async def keep_alive():
     import aiohttp, os, asyncio
     url = os.getenv("RENDER_EXTERNAL_URL", f"http://localhost:{os.getenv('PORT','10000')}")
     while True:
-    asyncio.create_task(keep_alive())
-
-    try:
+        try:
             async with aiohttp.ClientSession() as s:
                 await s.get(url + "/")
         except Exception:
             pass
         await asyncio.sleep(300)
+
+
+async def main():
+    asyncio.create_task(keep_alive())
+
     if not BOT_TOKEN or OWNER_ID == 0:
         raise RuntimeError("Не настроены BOT_TOKEN или OWNER_ID.")
 
